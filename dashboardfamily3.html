@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Family Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e1a14;
+    --surface: rgba(255,255,255,0.04);
+    --surface2: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.08);
+    --text: #f5f0e8;
+    --muted: rgba(245,240,232,0.45);
+    --accent: #7db87a;
+    --accent2: #a8d5a2;
+    --accent-dim: rgba(125,184,122,0.15);
+    --today-bg: rgba(125,184,122,0.12);
+    --today-border: #7db87a;
+    --header-bg: #0a1510;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    overflow: hidden;
+  }
+
+  .dashboard {
+    width: 100vw;
+    height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr;
+  }
+
+  /* ── TOP BAR: clock + weather ── */
+  .top-bar {
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .clock-block {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+  }
+
+  .clock-time {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.8rem, 7vw, 5rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .clock-seconds {
+    font-size: 0.36em;
+    font-family: 'DM Mono', monospace;
+    font-weight: 300;
+    color: var(--accent);
+    margin-top: 0.2em;
+  }
+
+  .clock-date {
+    font-size: clamp(0.65rem, 1.5vw, 0.85rem);
+    color: var(--muted);
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.3rem;
+  }
+
+  .weather-block { text-align: right; }
+
+  .weather-current {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.4rem;
+  }
+
+  .weather-icon { font-size: clamp(1.6rem, 4vw, 2.5rem); line-height: 1; }
+
+  .weather-temp {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 5vw, 3.2rem);
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .weather-desc {
+    font-size: clamp(0.6rem, 1.4vw, 0.78rem);
+    color: var(--accent);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .weather-feels {
+    font-size: clamp(0.6rem, 1.4vw, 0.75rem);
+    color: var(--muted);
+    font-weight: 300;
+  }
+
+  .weather-forecast {
+    display: flex;
+    gap: 0.6rem;
+    justify-content: flex-end;
+    margin-top: 0.3rem;
+  }
+
+  .forecast-day { text-align: center; font-size: clamp(0.55rem, 1.2vw, 0.7rem); }
+  .forecast-day .f-label { color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85em; }
+  .forecast-day .f-icon { font-size: 1.2em; margin: 0.1em 0; }
+  .forecast-day .f-lo { color: var(--muted); }
+
+  /* ── CALENDAR BODY ── */
+  .cal-body {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    overflow: hidden;
+  }
+
+  /* ── CURRENT WEEK: list view ── */
+  .week-list {
+    border-bottom: 2px solid var(--accent);
+    background: var(--header-bg);
+    padding: 0.6rem 1rem;
+  }
+
+  .week-list-title {
+    font-size: clamp(0.55rem, 1.2vw, 0.7rem);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+  }
+
+  .week-list-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.4rem;
+  }
+
+  .week-list-day {
+    display: flex;
+    flex-direction: column;
+    gap: 0.18rem;
+    min-width: 0;
+  }
+
+  .week-list-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.3rem;
+    margin-bottom: 0.15rem;
+    padding-bottom: 0.15rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .week-list-header .wl-dayname {
+    font-size: clamp(0.5rem, 1.1vw, 0.65rem);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+
+  .week-list-header .wl-daynum {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(0.9rem, 2.2vw, 1.4rem);
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  .week-list-day.today .wl-dayname { color: var(--accent); }
+  .week-list-day.today .wl-daynum  { color: var(--accent); }
+  .week-list-day.today .week-list-header {
+    border-bottom-color: var(--accent);
+  }
+
+  .wl-event {
+    font-size: clamp(0.45rem, 1vw, 0.6rem);
+    line-height: 1.3;
+    color: var(--text);
+    background: var(--surface2);
+    border-left: 2px solid var(--accent2);
+    padding: 0.12rem 0.25rem;
+    border-radius: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .wl-event.allday {
+    border-left-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  .wl-more {
+    font-size: clamp(0.4rem, 0.9vw, 0.55rem);
+    color: var(--muted);
+  }
+
+  .wl-empty {
+    font-size: clamp(0.4rem, 0.9vw, 0.52rem);
+    color: var(--muted);
+    font-style: italic;
+    opacity: 0.5;
+  }
+
+  /* ── FUTURE WEEKS: compact grid ── */
+  .future-weeks {
+    overflow-y: auto;
+    padding: 0.5rem;
+    scrollbar-width: none;
+  }
+  .future-weeks::-webkit-scrollbar { display: none; }
+
+  /* Day-name header row */
+  .cal-dow-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.3rem;
+    margin-bottom: 0.3rem;
+    padding: 0 0.1rem;
+  }
+
+  .cal-dow {
+    text-align: center;
+    font-size: clamp(0.45rem, 1vw, 0.6rem);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+
+  .cal-week {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.3rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .cal-day {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.3rem 0.28rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    overflow: hidden;
+    min-height: 3.5rem;
+  }
+
+  .cal-day.today {
+    background: var(--today-bg);
+    border-color: var(--today-border);
+  }
+
+  .cal-day.other-month { opacity: 0.3; }
+
+  .cal-day-num {
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(0.5rem, 1.1vw, 0.65rem);
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .cal-day.today .cal-day-num { color: var(--accent); font-weight: 600; }
+
+  .cal-event {
+    font-size: clamp(0.4rem, 0.9vw, 0.55rem);
+    line-height: 1.25;
+    color: var(--text);
+    background: var(--surface2);
+    border-left: 2px solid var(--accent2);
+    padding: 0.08rem 0.2rem;
+    border-radius: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .cal-event.allday {
+    border-left-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  .cal-more {
+    font-size: clamp(0.35rem, 0.8vw, 0.5rem);
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .status-msg {
+    color: var(--muted);
+    font-size: 0.7rem;
+    text-align: center;
+    padding: 1rem;
+    grid-column: 1 / -1;
+  }
+
+  .grain {
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 999;
+    opacity: 0.02;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+  }
+</style>
+</head>
+<body>
+<div class="grain"></div>
+
+<div class="dashboard">
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="clock-block">
+      <div>
+        <div class="clock-time">
+          <span id="clockHM">--:--</span>
+          <span class="clock-seconds" id="clockSec">--</span>
+        </div>
+        <div class="clock-date" id="clockDate">Loading…</div>
+      </div>
+    </div>
+    <div class="weather-block">
+      <div class="weather-current">
+        <span class="weather-icon" id="wIcon">🌤</span>
+        <span class="weather-temp" id="wTemp">--°</span>
+      </div>
+      <div class="weather-desc" id="wDesc">Loading…</div>
+      <div class="weather-feels" id="wFeels">Feels like --°</div>
+      <div class="weather-forecast" id="wForecast"></div>
+    </div>
+  </div>
+
+  <!-- CALENDAR BODY -->
+  <div class="cal-body">
+
+    <!-- CURRENT WEEK: list view -->
+    <div class="week-list">
+      <div class="week-list-title" id="weekListTitle">This Week</div>
+      <div class="week-list-grid" id="weekListGrid"></div>
+    </div>
+
+    <!-- FUTURE WEEKS: compact grid -->
+    <div class="future-weeks" id="futureWeeks">
+      <div class="cal-dow-row">
+        <div class="cal-dow">Sun</div><div class="cal-dow">Mon</div>
+        <div class="cal-dow">Tue</div><div class="cal-dow">Wed</div>
+        <div class="cal-dow">Thu</div><div class="cal-dow">Fri</div>
+        <div class="cal-dow">Sat</div>
+      </div>
+      <div id="futureGrid"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════
+const CONFIG = {
+  weatherApiKey: '5722df504deea20e03f7e4a6d97231ef',
+  weatherCity: 'Kansas City,US',
+  icalUrl: 'https://p35-caldav.icloud.com/published/2/MTA4NDU4NTMyNTEwODQ1OPWHi7SZPkNNYTKE1ACf5XyII7LHnV_Crc5J0w-OIWnVFGSspA4481xfEAUxHL4wwc0ZJR9rEDRs41PftNCEjrU',
+  weatherRefreshMin: 10,
+  calRefreshMin: 15,
+  futureWeeks: 5,
+};
+
+// ════════════════════════════════════
+// CLOCK
+// ════════════════════════════════════
+const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function updateClock() {
+  const now = new Date();
+  let h = now.getHours();
+  h = h % 12 || 12;
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clockHM').textContent = `${h}:${m}`;
+  document.getElementById('clockSec').textContent = s;
+  document.getElementById('clockDate').textContent =
+    `${DAYS[now.getDay()]}, ${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ════════════════════════════════════
+// WEATHER
+// ════════════════════════════════════
+const WX_ICONS = {
+  '01d':'☀️','01n':'🌙','02d':'⛅','02n':'⛅','03d':'☁️','03n':'☁️',
+  '04d':'☁️','04n':'☁️','09d':'🌧','09n':'🌧','10d':'🌦','10n':'🌦',
+  '11d':'⛈','11n':'⛈','13d':'❄️','13n':'❄️','50d':'🌫','50n':'🌫',
+};
+function toF(k) { return Math.round((k - 273.15) * 9/5 + 32); }
+function wxIcon(c) { return WX_ICONS[c] || '🌤'; }
+
+async function fetchWeather() {
+  if (CONFIG.weatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY') {
+    document.getElementById('wDesc').textContent = 'Add API key'; return;
+  }
+  try {
+    const base = `https://api.openweathermap.org/data/2.5`;
+    const q = `q=${CONFIG.weatherCity}&appid=${CONFIG.weatherApiKey}`;
+    const [curRes, fRes] = await Promise.all([
+      fetch(`${base}/weather?${q}`),
+      fetch(`${base}/forecast?${q}`)
+    ]);
+    const cur = await curRes.json();
+    const forecast = await fRes.json();
+
+    document.getElementById('wIcon').textContent = wxIcon(cur.weather[0].icon);
+    document.getElementById('wTemp').textContent = `${toF(cur.main.temp)}°`;
+    document.getElementById('wDesc').textContent = cur.weather[0].description;
+    document.getElementById('wFeels').textContent = `Feels like ${toF(cur.main.feels_like)}°`;
+
+    const dayMap = {};
+    const today = new Date().toDateString();
+    forecast.list.forEach(item => {
+      const key = new Date(item.dt * 1000).toDateString();
+      if (key === today) return;
+      if (!dayMap[key]) dayMap[key] = [];
+      dayMap[key].push(item);
+    });
+
+    const fEl = document.getElementById('wForecast');
+    fEl.innerHTML = '';
+    Object.keys(dayMap).slice(0,3).forEach(dk => {
+      const items = dayMap[dk];
+      const noon = items.reduce((a,b) =>
+        Math.abs(new Date(a.dt*1000).getHours()-12) < Math.abs(new Date(b.dt*1000).getHours()-12) ? a : b);
+      const hi = Math.max(...items.map(i=>toF(i.main.temp_max)));
+      const lo = Math.min(...items.map(i=>toF(i.main.temp_min)));
+      const label = DAY_SHORT[new Date(noon.dt*1000).getDay()];
+      fEl.innerHTML += `<div class="forecast-day">
+        <div class="f-label">${label}</div>
+        <div class="f-icon">${wxIcon(noon.weather[0].icon)}</div>
+        <div class="f-temps">${hi}° <span class="f-lo">${lo}°</span></div>
+      </div>`;
+    });
+  } catch(e) {
+    document.getElementById('wDesc').textContent = 'Weather unavailable';
+  }
+}
+fetchWeather();
+setInterval(fetchWeather, CONFIG.weatherRefreshMin * 60 * 1000);
+
+// ════════════════════════════════════
+// iCAL PARSER
+// ════════════════════════════════════
+function parseIcal(text) {
+  const events = [];
+  const lines = text.replace(/\r\n[ \t]/g,'').split(/\r\n|\n/);
+  let ev = null;
+  for (const line of lines) {
+    if (line === 'BEGIN:VEVENT') { ev = {}; continue; }
+    if (line === 'END:VEVENT')   { if (ev && ev.summary && ev.start) events.push(ev); ev = null; continue; }
+    if (!ev) continue;
+    const col = line.indexOf(':');
+    if (col < 0) continue;
+    const key = line.slice(0, col);
+    const val = line.slice(col + 1);
+    const baseKey = key.replace(/;.*$/,'');
+    if (baseKey === 'SUMMARY') ev.summary = val;
+    if (baseKey === 'DTSTART') ev.start = parseIcalDate(val);
+    if (baseKey === 'DTEND')   ev.end   = parseIcalDate(val);
+    if (key.includes('VALUE=DATE') || line.startsWith('DTSTART;VALUE=DATE')) ev.allDay = true;
+  }
+  return events;
+}
+
+function parseIcalDate(val) {
+  val = val.trim();
+  if (val.length === 8) {
+    return new Date(parseInt(val.slice(0,4)), parseInt(val.slice(4,6))-1, parseInt(val.slice(6,8)));
+  }
+  const y=val.slice(0,4),mo=val.slice(4,6),d=val.slice(6,8),h=val.slice(9,11),mi=val.slice(11,13),s=val.slice(13,15);
+  return val.endsWith('Z')
+    ? new Date(`${y}-${mo}-${d}T${h}:${mi}:${s}Z`)
+    : new Date(`${y}-${mo}-${d}T${h}:${mi}:${s}`);
+}
+
+function formatTime(date, allDay) {
+  if (allDay) return '';
+  let h = date.getHours(), m = date.getMinutes();
+  const ap = h >= 12 ? 'pm' : 'am';
+  h = h % 12 || 12;
+  return `${h}${m ? ':'+String(m).padStart(2,'0') : ''}${ap} `;
+}
+
+// ════════════════════════════════════
+// CALENDAR RENDER
+// ════════════════════════════════════
+function buildCalendar(events) {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  // Group events by date
+  const byDate = {};
+  events.forEach(ev => {
+    const key = ev.start.toDateString();
+    if (!byDate[key]) byDate[key] = [];
+    byDate[key].push(ev);
+  });
+  Object.values(byDate).forEach(arr =>
+    arr.sort((a,b) => (a.allDay ? -1 : 1) - (b.allDay ? -1 : 1))
+  );
+
+  // ── CURRENT WEEK LIST VIEW ──
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - today.getDay()); // Sunday
+
+  const weekGrid = document.getElementById('weekListGrid');
+  weekGrid.innerHTML = '';
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    const isToday = d.toDateString() === today.toDateString();
+    const dayEvs = byDate[d.toDateString()] || [];
+
+    const col = document.createElement('div');
+    col.className = `week-list-day${isToday ? ' today' : ''}`;
+
+    const hdr = document.createElement('div');
+    hdr.className = 'week-list-header';
+    hdr.innerHTML = `<span class="wl-dayname">${DAY_SHORT[i]}</span><span class="wl-daynum">${d.getDate()}</span>`;
+    col.appendChild(hdr);
+
+    if (dayEvs.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'wl-empty';
+      empty.textContent = '—';
+      col.appendChild(empty);
+    } else {
+      dayEvs.forEach(ev => {
+        const el = document.createElement('div');
+        el.className = `wl-event${ev.allDay ? ' allday' : ''}`;
+        el.title = ev.summary;
+        el.textContent = formatTime(ev.start, ev.allDay) + ev.summary;
+        col.appendChild(el);
+      });
+    }
+
+    weekGrid.appendChild(col);
+  }
+
+  // ── FUTURE WEEKS GRID ──
+  const futureGrid = document.getElementById('futureGrid');
+  futureGrid.innerHTML = '';
+
+  for (let w = 1; w <= CONFIG.futureWeeks; w++) {
+    const weekDiv = document.createElement('div');
+    weekDiv.className = 'cal-week';
+
+    for (let d2 = 0; d2 < 7; d2++) {
+      const dd = new Date(weekStart);
+      dd.setDate(weekStart.getDate() + w * 7 + d2);
+      const isToday = dd.toDateString() === today.toDateString();
+      const isCurrentMonth = dd.getMonth() === today.getMonth();
+      const dayEvs = byDate[dd.toDateString()] || [];
+      const shown = dayEvs.slice(0, 3);
+      const extra = dayEvs.length - shown.length;
+
+      const cell = document.createElement('div');
+      cell.className = `cal-day${isToday ? ' today' : ''}${!isCurrentMonth ? ' other-month' : ''}`;
+
+      let html = `<div class="cal-day-num">${dd.getDate()}</div>`;
+      shown.forEach(ev => {
+        html += `<div class="cal-event${ev.allDay ? ' allday' : ''}" title="${ev.summary}">${formatTime(ev.start, ev.allDay)}${ev.summary}</div>`;
+      });
+      if (extra > 0) html += `<div class="cal-more">+${extra} more</div>`;
+      cell.innerHTML = html;
+      weekDiv.appendChild(cell);
+    }
+
+    futureGrid.appendChild(weekDiv);
+  }
+}
+
+// ════════════════════════════════════
+// iCAL FETCH
+// ════════════════════════════════════
+async function fetchCalendar() {
+  const proxies = [
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(CONFIG.icalUrl)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(CONFIG.icalUrl)}`,
+    `https://corsproxy.io/?url=${encodeURIComponent(CONFIG.icalUrl)}`,
+  ];
+
+  let icalText = null;
+  for (const proxyUrl of proxies) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 12000);
+      const r = await fetch(proxyUrl, { signal: controller.signal });
+      clearTimeout(timer);
+      if (r.ok) {
+        const t = await r.text();
+        if (t && t.includes('BEGIN:VCALENDAR')) {
+          icalText = t;
+          console.log('Calendar loaded via:', proxyUrl.split('?')[0], '— events area loading');
+          break;
+        }
+      }
+    } catch(e) { console.warn('Proxy failed:', e.message); }
+  }
+
+  if (!icalText) {
+    document.getElementById('weekListGrid').innerHTML = '<div class="status-msg">Could not load calendar</div>';
+    return;
+  }
+
+  const events = parseIcal(icalText);
+  buildCalendar(events);
+  console.log('Events loaded:', events.length);
+}
+
+fetchCalendar();
+setInterval(fetchCalendar, CONFIG.calRefreshMin * 60 * 1000);
+setInterval(() => {
+  const n = new Date();
+  if (n.getHours() === 0 && n.getMinutes() === 0) fetchCalendar();
+}, 60000);
+</script>
+</body>
+</html>

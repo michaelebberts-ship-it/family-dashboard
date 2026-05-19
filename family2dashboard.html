@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Family Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: rgba(255,255,255,0.04);
+    --surface2: rgba(255,255,255,0.07);
+    --border: rgba(255,255,255,0.09);
+    --text: #f0ede8;
+    --muted: rgba(240,237,232,0.45);
+    --accent: #c8a96e;
+    --accent2: #6eb8c8;
+    --danger: #e07070;
+    --today-bg: rgba(200,169,110,0.15);
+    --today-border: #c8a96e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    overflow: hidden;
+  }
+
+  /* Portrait layout: full viewport height, stacked */
+  .dashboard {
+    width: 100vw;
+    height: 100vh;
+    display: grid;
+    grid-template-rows: 42vh 18vh 1fr;
+    grid-template-columns: 1fr;
+  }
+
+  /* ── PHOTO PANEL ── */
+  .photo-panel {
+    position: relative;
+    overflow: hidden;
+    grid-row: 1;
+  }
+
+  .photo-panel img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity 1.2s ease;
+  }
+
+  .photo-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(13,15,20,0.1) 0%,
+      rgba(13,15,20,0.0) 40%,
+      rgba(13,15,20,0.7) 85%,
+      rgba(13,15,20,1) 100%
+    );
+  }
+
+  /* Clock & weather sit at bottom of photo panel */
+  .clock-weather {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0 2rem 1.2rem;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  .clock-block {}
+
+  .clock-time {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(3.5rem, 10vw, 6rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.1em;
+  }
+
+  .clock-seconds {
+    font-size: 0.38em;
+    font-family: 'DM Mono', monospace;
+    font-weight: 300;
+    color: var(--accent);
+    margin-top: 0.25em;
+    line-height: 1;
+  }
+
+  .clock-date {
+    font-size: clamp(0.75rem, 2.2vw, 1rem);
+    color: var(--muted);
+    font-weight: 300;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 0.3rem;
+  }
+
+  /* ── WEATHER PANEL ── */
+  .weather-block {
+    text-align: right;
+  }
+
+  .weather-current {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+
+  .weather-icon {
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    line-height: 1;
+  }
+
+  .weather-temp {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 6vw, 4rem);
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .weather-feels {
+    font-size: clamp(0.65rem, 1.8vw, 0.85rem);
+    color: var(--muted);
+    margin-top: 0.2rem;
+    font-weight: 300;
+  }
+
+  .weather-desc {
+    font-size: clamp(0.65rem, 1.8vw, 0.85rem);
+    color: var(--accent);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .weather-forecast {
+    display: flex;
+    gap: 0.8rem;
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+  }
+
+  .forecast-day {
+    text-align: center;
+    font-size: clamp(0.6rem, 1.5vw, 0.75rem);
+  }
+
+  .forecast-day .f-label {
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.85em;
+  }
+
+  .forecast-day .f-icon { font-size: 1.3em; margin: 0.15em 0; }
+
+  .forecast-day .f-temps { color: var(--text); }
+  .forecast-day .f-lo { color: var(--muted); }
+
+  /* ── DATE STRIP ── */
+  .date-strip {
+    grid-row: 2;
+    padding: 0.6rem 1rem;
+    display: flex;
+    gap: 0.4rem;
+    align-items: stretch;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  .day-header {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.3rem 0.2rem;
+    border-radius: 6px;
+    font-size: clamp(0.55rem, 1.4vw, 0.72rem);
+    gap: 0.15rem;
+  }
+
+  .day-header.today {
+    background: var(--today-bg);
+    border: 1px solid var(--today-border);
+  }
+
+  .day-header .day-name {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-size: 0.85em;
+  }
+
+  .day-header.today .day-name { color: var(--accent); }
+
+  .day-header .day-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6em;
+    line-height: 1;
+    font-weight: 700;
+  }
+
+  .day-header.today .day-num { color: var(--accent); }
+
+  /* ── CALENDAR GRID ── */
+  .calendar-panel {
+    grid-row: 3;
+    overflow-y: auto;
+    padding: 0.5rem 0.5rem 1rem;
+    scrollbar-width: none;
+  }
+
+  .calendar-panel::-webkit-scrollbar { display: none; }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.3rem;
+    height: 100%;
+  }
+
+  .cal-day {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 0.4rem 0.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-height: 0;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    transition: background 0.2s;
+  }
+
+  .cal-day.today {
+    background: var(--today-bg);
+    border-color: var(--today-border);
+  }
+
+  .cal-day.other-month {
+    opacity: 0.35;
+  }
+
+  .cal-day-num {
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(0.55rem, 1.3vw, 0.7rem);
+    color: var(--muted);
+    font-weight: 400;
+    flex-shrink: 0;
+  }
+
+  .cal-day.today .cal-day-num {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .cal-event {
+    font-size: clamp(0.42rem, 1vw, 0.58rem);
+    line-height: 1.25;
+    color: var(--text);
+    background: var(--surface2);
+    border-left: 2px solid var(--accent2);
+    padding: 0.1rem 0.25rem;
+    border-radius: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .cal-event.allday {
+    border-left-color: var(--accent);
+    color: var(--accent);
+    background: rgba(200,169,110,0.1);
+  }
+
+  .cal-more {
+    font-size: clamp(0.38rem, 0.9vw, 0.52rem);
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  /* ── LOADING / ERROR STATES ── */
+  .status-msg {
+    color: var(--muted);
+    font-size: 0.7rem;
+    text-align: center;
+    padding: 1rem;
+  }
+
+  .photo-loading {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1a1c24 0%, #0d0f14 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* Subtle grain overlay */
+  .grain {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+  }
+</style>
+</head>
+<body>
+
+<div class="grain"></div>
+
+<div class="dashboard">
+
+  <!-- PHOTO + CLOCK/WEATHER -->
+  <div class="photo-panel" id="photoPanel">
+    <div class="photo-loading" id="photoLoading">Loading photo…</div>
+    <img id="photoImg" src="" alt="Family photo" style="display:none; position:absolute; inset:0;">
+    <div class="photo-overlay"></div>
+    <div class="clock-weather">
+      <div class="clock-block">
+        <div class="clock-time">
+          <span id="clockHM">--:--</span>
+          <span class="clock-seconds" id="clockSec">--</span>
+        </div>
+        <div class="clock-date" id="clockDate">Loading…</div>
+      </div>
+      <div class="weather-block" id="weatherBlock">
+        <div class="weather-current">
+          <span class="weather-icon" id="wIcon">🌤</span>
+          <span class="weather-temp" id="wTemp">--°</span>
+        </div>
+        <div class="weather-desc" id="wDesc">Loading…</div>
+        <div class="weather-feels" id="wFeels">Feels like --°</div>
+        <div class="weather-forecast" id="wForecast"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DATE STRIP -->
+  <div class="date-strip" id="dateStrip"></div>
+
+  <!-- CALENDAR GRID -->
+  <div class="calendar-panel">
+    <div class="cal-grid" id="calGrid"></div>
+  </div>
+
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+// CONFIG — edit these values
+// ════════════════════════════════════════════════
+const CONFIG = {
+  // OpenWeatherMap free API key — sign up at openweathermap.org
+  weatherApiKey: '5722df504deea20e03f7e4a6d97231ef',
+  // Your city name or lat,lon e.g. 'Chicago,US' or use lat/lon below
+  weatherCity: 'Kansas City,US',
+  // OR use lat/lon (comment out weatherCity and uncomment these):
+  // weatherLat: 41.8781,
+  // weatherLon: -87.6298,
+
+  // Public iCal URL (Google Calendar, Apple Calendar public feed, etc.)
+  icalUrl: 'https://p35-caldav.icloud.com/published/2/MTA4NDU4NTMyNTEwODQ1OPWHi7SZPkNNYTKE1ACf5XyII7LHnV_Crc5J0w-OIWnVFGSspA4481xfEAUxHL4wwc0ZJR9rEDRs41PftNCEjrU',
+
+  // Photos: put your photos in a folder next to this HTML file
+  // List the filenames here, or see the auto-rotate note below
+  photos: [
+    'photos/photo1.jpg',
+    'photos/photo2.jpg',
+    'photos/photo3.jpg',
+  ],
+  photoIntervalSec: 30, // seconds between photo changes
+
+  // How many weeks to show in calendar (2 = past week + next 5 weeks)
+  calWeeksBefore: 0,
+  calWeeksTotal: 6,
+
+  // Refresh intervals
+  weatherRefreshMin: 10,
+  calRefreshMin: 15,
+};
+
+// ════════════════════════════════════════════════
+// CLOCK
+// ════════════════════════════════════════════════
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function updateClock() {
+  const now = new Date();
+  let h = now.getHours();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clockHM').textContent = `${h}:${m}`;
+  document.getElementById('clockSec').textContent = s;
+  document.getElementById('clockDate').textContent =
+    `${DAYS[now.getDay()]}, ${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ════════════════════════════════════════════════
+// PHOTOS
+// ════════════════════════════════════════════════
+let photoIndex = 0;
+const photoImg = document.getElementById('photoImg');
+const photoLoading = document.getElementById('photoLoading');
+
+function showPhoto(idx) {
+  if (!CONFIG.photos.length) return;
+  const src = CONFIG.photos[idx % CONFIG.photos.length];
+  const tmp = new Image();
+  tmp.onload = () => {
+    photoImg.src = src;
+    photoImg.style.display = 'block';
+    photoLoading.style.display = 'none';
+  };
+  tmp.onerror = () => {
+    photoLoading.textContent = `Photo not found: ${src}`;
+  };
+  tmp.src = src;
+}
+
+function nextPhoto() {
+  photoIndex = (photoIndex + 1) % CONFIG.photos.length;
+  photoImg.style.opacity = 0;
+  setTimeout(() => {
+    showPhoto(photoIndex);
+    photoImg.style.opacity = 1;
+  }, 600);
+}
+
+if (CONFIG.photos.length) {
+  showPhoto(0);
+  setInterval(nextPhoto, CONFIG.photoIntervalSec * 1000);
+} else {
+  photoLoading.textContent = 'Add photo paths to CONFIG.photos';
+}
+
+// ════════════════════════════════════════════════
+// WEATHER — OpenWeatherMap
+// ════════════════════════════════════════════════
+const WX_ICONS = {
+  '01d':'☀️','01n':'🌙','02d':'⛅','02n':'⛅',
+  '03d':'☁️','03n':'☁️','04d':'☁️','04n':'☁️',
+  '09d':'🌧','09n':'🌧','10d':'🌦','10n':'🌦',
+  '11d':'⛈','11n':'⛈','13d':'❄️','13n':'❄️',
+  '50d':'🌫','50n':'🌫',
+};
+
+function toF(k) { return Math.round((k - 273.15) * 9/5 + 32); }
+function wxIcon(code) { return WX_ICONS[code] || '🌤'; }
+
+async function fetchWeather() {
+  if (CONFIG.weatherApiKey === 'YOUR_OPENWEATHERMAP_API_KEY') {
+    document.getElementById('wDesc').textContent = 'Add API key';
+    return;
+  }
+  try {
+    let currentUrl, forecastUrl;
+    if (CONFIG.weatherLat) {
+      currentUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${CONFIG.weatherLat}&lon=${CONFIG.weatherLon}&appid=${CONFIG.weatherApiKey}`;
+      forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${CONFIG.weatherLat}&lon=${CONFIG.weatherLon}&appid=${CONFIG.weatherApiKey}`;
+    } else {
+      currentUrl = `https://api.openweathermap.org/data/2.5/weather?q=${CONFIG.weatherCity}&appid=${CONFIG.weatherApiKey}`;
+      forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${CONFIG.weatherCity}&appid=${CONFIG.weatherApiKey}`;
+    }
+
+    const [curRes, fRes] = await Promise.all([fetch(currentUrl), fetch(forecastUrl)]);
+    const cur = await curRes.json();
+    const forecast = await fRes.json();
+
+    document.getElementById('wIcon').textContent = wxIcon(cur.weather[0].icon);
+    document.getElementById('wTemp').textContent = `${toF(cur.main.temp)}°`;
+    document.getElementById('wDesc').textContent = cur.weather[0].description;
+    document.getElementById('wFeels').textContent = `Feels like ${toF(cur.main.feels_like)}°`;
+
+    // 3-day forecast: pick noon reading for next 3 days
+    const dayMap = {};
+    const today = new Date().toDateString();
+    forecast.list.forEach(item => {
+      const d = new Date(item.dt * 1000);
+      const key = d.toDateString();
+      if (key === today) return;
+      if (!dayMap[key]) dayMap[key] = [];
+      dayMap[key].push(item);
+    });
+
+    const fDays = Object.keys(dayMap).slice(0,3);
+    const fEl = document.getElementById('wForecast');
+    fEl.innerHTML = '';
+    fDays.forEach(dk => {
+      const items = dayMap[dk];
+      const noon = items.reduce((a,b) => {
+        return Math.abs(new Date(a.dt*1000).getHours()-12) < Math.abs(new Date(b.dt*1000).getHours()-12) ? a : b;
+      });
+      const hi = Math.max(...items.map(i=>toF(i.main.temp_max)));
+      const lo = Math.min(...items.map(i=>toF(i.main.temp_min)));
+      const d = new Date(noon.dt * 1000);
+      const label = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+      fEl.innerHTML += `
+        <div class="forecast-day">
+          <div class="f-label">${label}</div>
+          <div class="f-icon">${wxIcon(noon.weather[0].icon)}</div>
+          <div class="f-temps"><span>${hi}°</span> <span class="f-lo">${lo}°</span></div>
+        </div>`;
+    });
+  } catch(e) {
+    document.getElementById('wDesc').textContent = 'Weather unavailable';
+    console.error('Weather fetch error:', e);
+  }
+}
+
+fetchWeather();
+setInterval(fetchWeather, CONFIG.weatherRefreshMin * 60 * 1000);
+
+// ════════════════════════════════════════════════
+// iCAL PARSER (no external lib needed)
+// ════════════════════════════════════════════════
+function parseIcal(text) {
+  const events = [];
+  const lines = text.replace(/\r\n /g,'').replace(/\r\n\t/g,'').split(/\r\n|\n/);
+  let ev = null;
+  for (const line of lines) {
+    if (line === 'BEGIN:VEVENT') { ev = {}; continue; }
+    if (line === 'END:VEVENT') { if (ev) events.push(ev); ev = null; continue; }
+    if (!ev) continue;
+    const col = line.indexOf(':');
+    if (col < 0) continue;
+    const key = line.slice(0, col).replace(/;.*$/,'');
+    const val = line.slice(col + 1);
+    if (key === 'SUMMARY') ev.summary = val;
+    if (key === 'DTSTART') ev.start = parseIcalDate(line.slice(col+1), line.slice(0,col));
+    if (key === 'DTEND')   ev.end   = parseIcalDate(line.slice(col+1), line.slice(0,col));
+    if (key === 'DTSTART;VALUE=DATE') ev.allDay = true;
+    if (line.startsWith('DTSTART;VALUE=DATE')) ev.allDay = true;
+    if (line.startsWith('DTEND;VALUE=DATE'))   ev.allDay = true;
+  }
+  return events;
+}
+
+function parseIcalDate(val, raw) {
+  val = val.trim();
+  if (val.length === 8) {
+    // All-day: YYYYMMDD
+    return new Date(
+      parseInt(val.slice(0,4)),
+      parseInt(val.slice(4,6))-1,
+      parseInt(val.slice(6,8))
+    );
+  }
+  // e.g. 20250519T130000Z or 20250519T130000
+  const y = val.slice(0,4), mo = val.slice(4,6), d = val.slice(6,8);
+  const h = val.slice(9,11), mi = val.slice(11,13), s = val.slice(13,15);
+  const isUtc = val.endsWith('Z');
+  if (isUtc) return new Date(`${y}-${mo}-${d}T${h}:${mi}:${s}Z`);
+  return new Date(`${y}-${mo}-${d}T${h}:${mi}:${s}`);
+}
+
+function formatTime(date, allDay) {
+  if (allDay) return '';
+  let h = date.getHours(), m = date.getMinutes();
+  const ampm = h >= 12 ? 'pm' : 'am';
+  h = h % 12 || 12;
+  return `${h}${m ? ':'+String(m).padStart(2,'0') : ''}${ampm} `;
+}
+
+// ════════════════════════════════════════════════
+// CALENDAR RENDER
+// ════════════════════════════════════════════════
+function buildCalendar(events) {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  // Find Sunday of current week
+  const startOfGrid = new Date(today);
+  startOfGrid.setDate(today.getDate() - today.getDay() - (CONFIG.calWeeksBefore * 7));
+
+  const totalDays = CONFIG.calWeeksTotal * 7;
+
+  // Build date strip (current week)
+  const strip = document.getElementById('dateStrip');
+  strip.innerHTML = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - today.getDay() + i);
+    const isToday = d.toDateString() === today.toDateString();
+    const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    strip.innerHTML += `
+      <div class="day-header ${isToday ? 'today' : ''}">
+        <span class="day-name">${dayNames[i]}</span>
+        <span class="day-num">${d.getDate()}</span>
+      </div>`;
+  }
+
+  // Build grid
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+
+  // Group events by date
+  const eventsByDate = {};
+  events.forEach(ev => {
+    if (!ev.start || !ev.summary) return;
+    const key = ev.start.toDateString();
+    if (!eventsByDate[key]) eventsByDate[key] = [];
+    eventsByDate[key].push(ev);
+  });
+
+  for (let i = 0; i < totalDays; i++) {
+    const d = new Date(startOfGrid);
+    d.setDate(startOfGrid.getDate() + i);
+    const isToday = d.toDateString() === today.toDateString();
+    const isCurrentMonth = d.getMonth() === today.getMonth();
+    const dayEvents = eventsByDate[d.toDateString()] || [];
+    dayEvents.sort((a,b) => (a.allDay ? -1 : 1) - (b.allDay ? -1 : 1));
+
+    const maxShow = 4;
+    const shown = dayEvents.slice(0, maxShow);
+    const extra = dayEvents.length - maxShow;
+
+    const cell = document.createElement('div');
+    cell.className = `cal-day ${isToday ? 'today' : ''} ${!isCurrentMonth ? 'other-month' : ''}`;
+
+    let evHTML = shown.map(ev => {
+      const time = formatTime(ev.start, ev.allDay);
+      return `<div class="cal-event ${ev.allDay ? 'allday' : ''}" title="${ev.summary}">${time}${ev.summary}</div>`;
+    }).join('');
+
+    if (extra > 0) evHTML += `<div class="cal-more">+${extra} more</div>`;
+
+    cell.innerHTML = `<div class="cal-day-num">${d.getDate()}</div>${evHTML}`;
+    grid.appendChild(cell);
+  }
+}
+
+async function fetchCalendar() {
+  if (CONFIG.icalUrl === 'YOUR_PUBLIC_ICAL_URL') {
+    buildCalendar([]);
+    document.getElementById('calGrid').innerHTML = '<div class="status-msg" style="grid-column:1/-1">Add your iCal URL to CONFIG.icalUrl</div>';
+    return;
+  }
+
+  const calGrid = document.getElementById('calGrid');
+
+  // These proxies add CORS headers so the browser can fetch iCloud calendar
+  const proxies = [
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(CONFIG.icalUrl)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(CONFIG.icalUrl)}`,
+    `https://corsproxy.io/?url=${encodeURIComponent(CONFIG.icalUrl)}`,
+  ];
+
+  let icalText = null;
+
+  for (const proxyUrl of proxies) {
+    try {
+      console.log('Trying:', proxyUrl.split('?')[0]);
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 12000);
+      const r = await fetch(proxyUrl, { signal: controller.signal });
+      clearTimeout(timer);
+      if (r.ok) {
+        const t = await r.text();
+        if (t && t.includes('BEGIN:VCALENDAR')) {
+          icalText = t;
+          console.log('Got iCal data, length:', t.length);
+          break;
+        } else {
+          console.warn('Got response but no iCal data:', t.slice(0, 100));
+        }
+      } else {
+        console.warn('HTTP error:', r.status);
+      }
+    } catch(e) {
+      console.warn('Proxy failed:', e.message);
+    }
+  }
+
+  if (!icalText) {
+    calGrid.innerHTML = `<div class="status-msg" style="grid-column:1/-1">
+      Could not load calendar.<br>
+      <small>All proxies failed — check console for details.</small>
+    </div>`;
+    return;
+  }
+
+  try {
+    const events = parseIcal(icalText);
+    buildCalendar(events);
+    console.log('Calendar loaded! Events found:', events.length);
+  } catch(e) {
+    console.error('Parse error:', e);
+    buildCalendar([]);
+  }
+}
+fetchCalendar();
+setInterval(fetchCalendar, CONFIG.calRefreshMin * 60 * 1000);
+// Rebuild calendar grid at midnight to advance the day
+setInterval(() => {
+  const now = new Date();
+  if (now.getHours() === 0 && now.getMinutes() === 0) fetchCalendar();
+}, 60000);
+</script>
+</body>
+</html>
